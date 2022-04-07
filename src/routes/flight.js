@@ -58,37 +58,43 @@ router.get('/company/miles/:name/:quarter', async(req, res)=>{
 router.get('/company/path/:name/:quarter', async (req, res)=>{
     const quarter = req.params.quarter
     const company = req.params.name
-    const destResult = await Flight.findAll({
-        group: ['DestWac'],
-        attributes:[
-            'DestWac',
-            [sequelize.fn('COUNT', sequelize.col('ItinID')),'DestCounter']
-        ], 
-        where:{
-            Quarter: quarter,
-            AirlineCompany: company
-        },
-        order: [[sequelize.literal('DestCounter'), 'DESC']],
-        limit:10
-    })
-    const originResult = await Flight.findAll({
-        group:['OriginWac'], 
-        attributes:[
-            'OriginWac', 
-            [sequelize.fn('COUNT', sequelize.col('ItinID')), 'OriginCounter']
-        ], 
-        where: {
-            Quarter:quarter, 
-            AirlineCompany: company
-        },
-        oreder: [[sequelize.literal('OriginCounter'), 'DESC']],
-        limit: 10
-    })
-    res.status(200).send({
-        destination: destResult, 
-        origin :originResult
-    })
-
+    try{
+        const destResult = await Flight.findAll({
+            group: ['DestWac'],
+            attributes:[
+                'DestWac',
+                [sequelize.fn('COUNT', sequelize.col('ItinID')),'DestCounter']
+            ], 
+            where:{
+                Quarter: quarter,
+                AirlineCompany: company
+            },
+            order: [[sequelize.literal('DestCounter'), 'DESC']],
+            limit:10
+        })
+        const originResult = await Flight.findAll({
+            group:['OriginWac'], 
+            attributes:[
+                'OriginWac', 
+                [sequelize.fn('COUNT', sequelize.col('ItinID')), 'OriginCounter']
+            ], 
+            where: {
+                Quarter:quarter, 
+                AirlineCompany: company
+            },
+            oreder: [[sequelize.literal('OriginCounter'), 'DESC']],
+            limit: 10
+        })
+        if(!destResult.length && !originResult.length){
+            return res.status(404).send('No Results Found')
+        }
+        res.status(200).send({
+            destination: destResult, 
+            origin :originResult
+        })
+    } catch(e){
+        res.status(500).send(e)
+    }
 })
 
 module.exports = router
