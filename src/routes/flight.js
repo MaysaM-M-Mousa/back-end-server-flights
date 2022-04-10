@@ -8,8 +8,8 @@ router.get('/', (req, res) => {
     res.status(200).send("Hello from flight router!")
 })
 
-router.get('/company/profit/:name', async (req, res) => {
-    const name = req.params.name
+router.get('/company/:name/profit', async (req, res) => {
+    const airlineCompany = req.params.name
     try{
         const profitPerQuarter = await Flight.findAll({
             attributes: [
@@ -18,7 +18,7 @@ router.get('/company/profit/:name', async (req, res) => {
                 ],
             group: ['Quarter'],
             where: {
-                AirlineCompany: name
+                airlineCompany
             }
         })
         if(! profitPerQuarter.length){
@@ -30,8 +30,8 @@ router.get('/company/profit/:name', async (req, res) => {
     }
 })
 
-router.get('/company/miles/:name/:quarter', async(req, res)=>{
-    const name = req.params.name
+router.get('/company/:name/:quarter/miles', async(req, res)=>{
+    const airlineCompany = req.params.name
     const quarter = req.params.quarter
     try{
         const milesFrequencies = await Flight.findAll({
@@ -40,8 +40,8 @@ router.get('/company/miles/:name/:quarter', async(req, res)=>{
                 [sequelize.fn('COUNT', sequelize.col('ItinID')), 'MilesFreq']
             ], 
             where: {
-                AirlineCompany: name, 
-                Quarter: quarter
+                airlineCompany, 
+                quarter
             },
             group:['Miles']
         })
@@ -50,51 +50,148 @@ router.get('/company/miles/:name/:quarter', async(req, res)=>{
         }
         res.status(200).send(milesFrequencies)
     } catch(e){
-
-    }
-    
+        res.status(500).send(e)
+    } 
 })
 
-router.get('/company/path/:name/:quarter', async (req, res)=>{
+router.get('/company/:name/:quarter/:type/path', async (req, res)=>{
     const quarter = req.params.quarter
-    const company = req.params.name
+    const airlineCompany = req.params.name
+    const type = req.params.type
+    const limit = req.query.limit
     try{
-        const destResult = await Flight.findAll({
-            group: ['DestWac'],
+        const typeVal = (type=='origin' || type=='dest')? type : null
+        if(! typeVal){
+            return res.status(400).send('Bad Value For Type')
+        }
+        const result = await Flight.findAll({
+            group: [typeVal],
             attributes:[
-                'DestWac',
-                [sequelize.fn('COUNT', sequelize.col('ItinID')),'DestCounter']
+                typeVal,
+                [sequelize.fn('COUNT', sequelize.col('ItinID')),'counter']
             ], 
             where:{
-                Quarter: quarter,
-                AirlineCompany: company
+                quarter,
+                airlineCompany
             },
-            order: [[sequelize.literal('DestCounter'), 'DESC']],
-            limit:10
+            order: [[sequelize.literal('counter'), 'DESC']],
+            limit: limit? parseInt(limit): undefined
         })
-        const originResult = await Flight.findAll({
-            group:['OriginWac'], 
-            attributes:[
-                'OriginWac', 
-                [sequelize.fn('COUNT', sequelize.col('ItinID')), 'OriginCounter']
-            ], 
-            where: {
-                Quarter:quarter, 
-                AirlineCompany: company
-            },
-            oreder: [[sequelize.literal('OriginCounter'), 'DESC']],
-            limit: 10
-        })
-        if(!destResult.length && !originResult.length){
+        if(!result.length){
             return res.status(404).send('No Results Found')
         }
-        res.status(200).send({
-            destination: destResult, 
-            origin :originResult
-        })
+        res.status(200).send(result)
     } catch(e){
         res.status(500).send(e)
     }
+})
+
+router.get('/company/:quarter/flights-per-company', async(req,res)=>{
+    const quarter = req.params.quarter
+    try{
+        const flightsFreq = await Flight.findAll({
+            attributes:[
+                'AirlineCompany', 
+                [sequelize.fn('COUNT', sequelize.col('MktID')), 'flightsFreq']
+            ], 
+            where:{quarter}, 
+            group: ['AirlineCompany']
+        })
+        if(! flightsFreq.length){
+            return res.status(404).send('No Results Found')
+        }
+        res.status(200).send(flightsFreq)
+    } catch(e){
+        res.status(500).send(e)
+    }
+})
+
+router.get('/state/:quarter/:type/flights-per-state', async(req, res)=>{
+    const quarter = req.params.quarter
+    const type = req.params.type
+    try{
+        const typeVal = (type =='origin' || type=='dest')? type: null
+        if(! typeVal){
+            return res.status(400).send('Bad Value For Type')
+        }
+        const flightsFreq = await Flight.findAll({
+            attributes:[
+                type+'Wac',
+                [sequelize.fn('COUNT', sequelize.col('MktID')), 'flightsFrequency']
+            ],
+            where :{quarter}, 
+            group:[type+'Wac']
+        })
+        if(! flightsFreq.length){
+            return res.status(404).send("No Results Found")
+        }
+        res.status(200).send(flightsFreq)
+    }catch(e){
+        res.status(500).send(e)
+    }
+})
+
+router.get('/company/:quarter/profit-per-company', async(req, res)=>{
+    const quarter = req.params.quarter
+    try{
+        const profitPerCompany = await Flight.findAll({
+            attributes: [
+                'AirlineCompany', 
+                [sequelize.fn('SUM', sequelize.literal('(NumTicketsOrdered*PricePerTicket)')),'profitsSum']
+            ],  
+            group:['AirlineCompany'], 
+            where:{quarter}
+        })
+        if(!profitPerCompany.length){
+            return res.status(404).send('No Results Found')
+        }
+        res.status(200).send(profitPerCompany)
+    } catch(e){
+        console.log(e)
+        res.status(500).send(e)
+    }  
+})
+
+router.get('/company/:quarter/miles-per-company', async(req, res)=>{
+    const quarter = req.params.quarter
+    try{
+        const milePerCompany = await Flight.findAll({
+            attributes: [
+                'AirlineCompany', 
+                [sequelize.fn('SUM', sequelize.col('Miles')),'MilesSum']
+            ],  
+            group:['AirlineCompany'], 
+            where:{quarter}
+        })
+        if(!milePerCompany.length){
+            return res.status(404).send('No Results Found')
+        }
+        res.status(200).send(milePerCompany)
+    } catch(e){
+        console.log(e)
+        res.status(500).send(e)
+    }  
+})
+
+router.get('/state/:quarter/profit-per-state', async(req, res)=>{
+    const quarter = req.params.quarter
+    try{
+        const profitPerState = await Flight.findAll({
+            attributes: [
+                'OriginWac', 
+                [sequelize.fn('SUM', sequelize.literal('(NumTicketsOrdered*PricePerTicket)')),'profitsSum']
+            ],  
+            group:['OriginWac'], 
+            where:{quarter}
+        })
+        if(!profitPerState.length){
+            return res.status(404).send('No Results Found')
+        }
+        res.status(200).send(profitPerState)
+    } catch(e){
+        console.log(e)
+        res.status(500).send(e)
+    }  
 })
 
 module.exports = router
