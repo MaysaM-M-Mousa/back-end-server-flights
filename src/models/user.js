@@ -57,4 +57,29 @@ const User = sequelize.define('user', {
     }
 });
 
+// instance methods
+User.prototype.generateAuthToken = async function () {
+    const user = this
+
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET)
+
+    try {
+        const tokenObj = new Token({ stringToken: token, userId: user.id })
+        await tokenObj.save()
+    } catch (e) {
+        return (e)
+    }
+    return token
+};
+
+User.prototype.toJSON = function () {
+
+    const user = Object.assign({}, this.get());
+
+    delete user.password;
+    delete user.tokens
+
+    return user;
+}
+
 module.exports = User
