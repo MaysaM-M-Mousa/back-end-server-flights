@@ -1,12 +1,14 @@
 const express = require('express')
 const applicationRouter = require('./routes/flight')
+const userRouter = require('./routes/user')
 
 const app = express()
 const PORT = process.env.PORT 
 
 app.use(express.json())
 app.use(applicationRouter)
+app.use(userRouter)
 
 app.listen(PORT, () => {
-    console.log("Express server is up and runnin on port " + PORT)
+    console.log("Express server is up and running on port " + PORT)
 })
