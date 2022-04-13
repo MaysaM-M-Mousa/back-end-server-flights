@@ -41,4 +41,18 @@ const User = sequelize.define('user', {
     timestamps: false,
     createdAt: false,
     updatedAt: false,
-})
+    hooks: {
+        beforeCreate: async function (user) {
+            user.firstName = user.firstName.toLowerCase()
+            user.lastName = user.lastName.toLowerCase()
+            user.email = user.email.toLowerCase()
+            user.dataValues.id = null
+            user.password = await bcrypt.hash(user.password, 8)
+        },
+        beforeUpdate: async function (user) {
+            if (user.changed('password')) {
+                user.password = await bcrypt.hash(user.password, 8)
+            }
+        }
+    }
+});
