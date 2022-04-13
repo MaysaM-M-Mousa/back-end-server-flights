@@ -82,4 +82,34 @@ User.prototype.toJSON = function () {
     return user;
 }
 
+User.prototype.toJSON = function () {
+
+    const user = Object.assign({}, this.get());
+
+    delete user.password;
+    delete user.tokens
+
+    return user;
+}
+
+// static methods
+User.findByCredentials = async function (userEmail, userPassword) {
+
+    const user = await User.findOne({
+        where: { 'email': userEmail }
+    })
+
+    if (!user) {
+        throw new Error('Unable to login')
+    }
+
+    const isMatch = await bcrypt.compare(userPassword, user.password)
+
+    if (!isMatch) {
+        throw new Error('Unable to login')
+    }
+
+    return user
+}
+
 module.exports = User
