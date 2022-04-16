@@ -1,6 +1,7 @@
 const express = require("express")
 const Flight = require("../models/flight")
 const sequelize = require("sequelize")
+const convertToStates = require('../utils/convertToStates')
 
 const router = express.Router()
 
@@ -129,7 +130,8 @@ router.get("/state/:quarter/:type/flights-per-state", async (req, res) => {
     if (!flightsFreq.length) {
       return res.status(404).send("No Results Found")
     }
-    res.status(200).send(flightsFreq)
+    const processedResult = await convertToStates(flightsFreq, [type + "Wac"])
+    res.status(200).send(processedResult)
   } catch (e) {
     res.status(500).send(e)
   }
@@ -201,7 +203,8 @@ router.get("/state/:quarter/profit-per-state", async (req, res) => {
     if (!profitPerState.length) {
       return res.status(404).send("No Results Found")
     }
-    res.status(200).send(profitPerState)
+    const processedResult = await convertToStates(profitPerState, 'OriginWac')
+    res.status(200).send(processedResult)
   } catch (e) {
     res.status(500).send(e)
   }
