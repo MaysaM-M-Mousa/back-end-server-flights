@@ -121,7 +121,7 @@ router.get("/state/:quarter/:type/flights-per-state", async (req, res) => {
   try {
     const flightsFreq = await Flight.findAll({
       attributes: [
-        type + "Wac",
+        [type + "Wac", "state"],
         [sequelize.fn("COUNT", sequelize.col("MktID")), "flightsFrequency"],
       ],
       where: { quarter },
@@ -130,8 +130,7 @@ router.get("/state/:quarter/:type/flights-per-state", async (req, res) => {
     if (!flightsFreq.length) {
       return res.status(404).send("No Results Found")
     }
-    const processedResult = await convertToStates(flightsFreq, [type + "Wac"])
-    res.status(200).send(processedResult)
+    res.status(200).send(flightsFreq)
   } catch (e) {
     res.status(500).send(e)
   }
@@ -188,7 +187,7 @@ router.get("/state/:quarter/profit-per-state", async (req, res) => {
   try {
     const profitPerState = await Flight.findAll({
       attributes: [
-        "OriginWac",
+        ["OriginWac", "state"],
         [
           sequelize.fn(
             "SUM",
@@ -203,8 +202,7 @@ router.get("/state/:quarter/profit-per-state", async (req, res) => {
     if (!profitPerState.length) {
       return res.status(404).send("No Results Found")
     }
-    const processedResult = await convertToStates(profitPerState, 'OriginWac')
-    res.status(200).send(processedResult)
+    res.status(200).send(profitPerState)
   } catch (e) {
     res.status(500).send(e)
   }
