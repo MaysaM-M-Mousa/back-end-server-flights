@@ -9,12 +9,8 @@ const myDict = {
 const myPromise = (data, attribute) => {
     return new Promise((resolve, reject) => {
 
-        for (var i = 0; i < data.length; i++) {
-            console.log(data[i])
+        for (var i = 0; i < data.length; i++) 
             data[i].dataValues[attribute] = myDict[data[i].dataValues[attribute]]
-
-        }
-
 
         resolve(data)
     })
