@@ -9,8 +9,8 @@ const PORT = process.env.PORT
 
 app.use(cors())
 app.use(express.json())
-app.use(applicationRouter)
 app.use(userRouter)
+app.use(applicationRouter)
 app.use(predictionRouter)
 
 app.listen(PORT, () => {
