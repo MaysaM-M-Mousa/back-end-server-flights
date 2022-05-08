@@ -2,6 +2,7 @@ const express = require("express")
 const Flight = require("../models/flight")
 const sequelize = require("sequelize")
 const convertToStates = require('../utils/convertToStates')
+const auth = require('../middlewares/auth')
 
 const router = express.Router()
 
@@ -9,7 +10,7 @@ router.get("/", (req, res) => {
   res.status(200).send("Hello from flight router!")
 })
 
-router.get("/company/:name/profit", async (req, res) => {
+router.get("/company/:name/profit", auth, async (req, res) => {
   const airlineCompany = req.params.name
   try {
     const profitPerQuarter = await Flight.findAll({
@@ -35,7 +36,7 @@ router.get("/company/:name/profit", async (req, res) => {
   }
 })
 
-router.get("/company/:name/:quarter/miles", async (req, res) => {
+router.get("/company/:name/:quarter/miles", auth, async (req, res) => {
   const airlineCompany = req.params.name
   const quarter = req.params.quarter
   try {
@@ -59,7 +60,7 @@ router.get("/company/:name/:quarter/miles", async (req, res) => {
   }
 })
 
-router.get("/company/:name/:quarter/:type/path", async (req, res) => {
+router.get("/company/:name/:quarter/:type/path", auth, async (req, res) => {
   const quarter = req.params.quarter
   const airlineCompany = req.params.name
   const type = req.params.type
@@ -91,7 +92,7 @@ router.get("/company/:name/:quarter/:type/path", async (req, res) => {
   }
 })
 
-router.get("/company/:quarter/flights-per-company", async (req, res) => {
+router.get("/company/:quarter/flights-per-company", auth, async (req, res) => {
   const quarter = req.params.quarter
   try {
     const flightsFreq = await Flight.findAll({
@@ -111,7 +112,7 @@ router.get("/company/:quarter/flights-per-company", async (req, res) => {
   }
 })
 
-router.get("/state/:quarter/:type/flights-per-state", async (req, res) => {
+router.get("/state/:quarter/:type/flights-per-state", auth, async (req, res) => {
   const quarter = req.params.quarter
   const type = req.params.type
   const typeVal = type == "origin" || type == "dest" ? type : null
@@ -136,7 +137,7 @@ router.get("/state/:quarter/:type/flights-per-state", async (req, res) => {
   }
 })
 
-router.get("/company/:quarter/profit-per-company", async (req, res) => {
+router.get("/company/:quarter/profit-per-company", auth, async (req, res) => {
   const quarter = req.params.quarter
   try {
     const profitPerCompany = await Flight.findAll({
@@ -162,7 +163,7 @@ router.get("/company/:quarter/profit-per-company", async (req, res) => {
   }
 })
 
-router.get("/company/:quarter/miles-per-company", async (req, res) => {
+router.get("/company/:quarter/miles-per-company", auth, async (req, res) => {
   const quarter = req.params.quarter
   try {
     const milePerCompany = await Flight.findAll({
@@ -182,7 +183,7 @@ router.get("/company/:quarter/miles-per-company", async (req, res) => {
   }
 })
 
-router.get("/state/:quarter/profit-per-state", async (req, res) => {
+router.get("/state/:quarter/profit-per-state", auth, async (req, res) => {
   const quarter = req.params.quarter
   try {
     const profitPerState = await Flight.findAll({

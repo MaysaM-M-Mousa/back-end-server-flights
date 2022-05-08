@@ -1,9 +1,10 @@
 const express = require('express')
 const axios = require('axios')
+const auth = require('../middlewares/auth')
 
 const router = express.Router()
 
-router.post('/ticket/predict', async (req, res) => {
+router.post('/ticket/predict', auth, async (req, res) => {
     const { method, url, body } = req;
     try {
         const response = await axios({
